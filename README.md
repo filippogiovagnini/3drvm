@@ -2,7 +2,7 @@
 
 This repository contains the **JAX implementation** of the **Implicit Deep Random Vortex Network (3D-iDRVN)**, a neural network–based Random Vortex Method for simulating incompressible fluid flows in **three-dimensional, wall-bounded domains**.
 
-Unlike classical numerical solvers (finite differences, finite elements, spectral methods), this approach is **grid-free** and avoids explicit evaluation of the **Biot–Savart kernel**, making it suitable for geometrically complex domains.  
+Unlike classical numerical solvers (finite differences, finite elements, spectral methods), this approach is **grid-free** and avoids explicit evaluation of the **Biot–Savart kernel**, making it suitable for geometrically complex domains, although, for now, we implemented the method just for the three-dimensional torus.
 
 The method combines a **probabilistic vortex representation of the Navier–Stokes equations** with deep neural networks and a novel **loss function**.
 
@@ -10,19 +10,23 @@ The method combines a **probabilistic vortex representation of the Navier–Stok
 
 ## ✨ Features
 
-- **Grid-free** simulation of incompressible 3D flows  
-- **Neural-network vorticity approximation** with implicit velocity recovery  
-- **Custom loss function** derived from vortex representation formula  
-- **Monte Carlo training scheme** for efficiency and flexibility  
-- Fully implemented in **JAX** with GPU/TPU acceleration  
+- **Grid-free** simulation of incompressible 3D flows
+- **Neural-network vorticity approximation** with implicit velocity recovery
+- **Custom loss function** derived from vortex representation formula
+- **Monte Carlo training scheme** for efficiency and flexibility
+- Fully implemented in [JAX](https://github.com/jax-ml/jax) with GPU/TPU acceleration
 
 ---
 
 ## 👩‍💻 Authors
 
+The authors of this project are:
+
 - **Giuseppe Bruno** [University of Bern](https://www.imsv.unibe.ch/about_us/staff/bruno_giuseppe/index_eng.html)
 - **Paula Cordero-Encinar** [Imperial College London](https://statml.io/students/paula-cordero-encinar/)
 - **Filippo Giovagnini** [Imperial College London](https://profiles.imperial.ac.uk/f.giovagnini23)
+
+Please note that the commit history of this repository does not accurately reflect the relative contributions of the authors, as the codebase originates from the migration of a prior project.
 
 ---
 
@@ -60,11 +64,11 @@ uv run experiment.py
 3drvm/
 │
 ├── src/                  # Core implementation in JAX
-│   ├── model.py          # Neural network
-│   ├── loss.py           # Loss function
-│   ├── experiment.py     # Loss function
-│   ├── solver.py         # Vortex/SDE solver
-│   └── utils.py          # Helpers
-│
+│   ├── train.py          # Neural network
+│   ├── update_stepper.py           # Loss function
+│   ├── interpolators.py     # Loss function
+│   ├── num_solvers.py         # Vortex/SDE solver
+│   └── utilities.py          # Helpers
+├── experiment.py                  # Core implementation in JAX
 └── README.md
-````
+```

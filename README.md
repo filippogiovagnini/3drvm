@@ -20,9 +20,9 @@ The method combines a **probabilistic vortex representation of the Navier–Stok
 
 ## 👩‍💻 Authors
 
-- **Giuseppe Bruno** (University of Bern)  
-- **Paula Cordero-Encinar** (Imperial College London)  
-- **Filippo Giovagnini** (Imperial College London)  
+- **Giuseppe Bruno** (University of Bern)
+- **Paula Cordero-Encinar** (Imperial College London)
+- **Filippo Giovagnini** (Imperial College London)
 
 ---
 
@@ -40,17 +40,23 @@ This project generalizes the **Deep Random Vortex Method (DRVM)** [Qi & Meng, 20
 
 ## ⚙️ Installation
 
-No need to intall any dependecies! Installation is as simple as this:
+No need to intall any dependecies, thanks to the [astral-uv/](https://github.com/astral-sh/uv) Python package and project manager! Installation is as simple as this:
 
 ```bash
 pip install uv
 git clone https://github.com/your-username/3drvm.git
+```
+
+Now you can already navigate to the folder ```src/```and run an experiment as follows:
+
+```bash
 cd 3drvm/src
 uv run experiment.py
 ```
 
 ## 📂 Repository Structure
 
+```bash
 3drvm/
 │
 ├── src/                  # Core implementation in JAX
@@ -61,3 +67,4 @@ uv run experiment.py
 │   └── utils.py          # Helpers
 │
 └── README.md
+````

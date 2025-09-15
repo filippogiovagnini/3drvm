@@ -121,7 +121,7 @@ def train(N, N_steps, N_realizations, T = 1, nu = 0.1, hidden_dim = 128, learnin
             schedule = optax.exponential_decay(
                 init_value=learning_rate, 
                 transition_steps=1000,
-                decay_rate=0.92
+                decay_rate=0.90
             )
             optimizer = optax.adam(schedule)
 
@@ -130,7 +130,7 @@ def train(N, N_steps, N_realizations, T = 1, nu = 0.1, hidden_dim = 128, learnin
             schedule = optax.exponential_decay(
                 init_value=learning_rate, 
                 transition_steps=1000,
-                decay_rate=0.65
+                decay_rate=0.70 # it was 0.65
             )
             optimizer = optax.adam(schedule)
 

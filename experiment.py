@@ -12,16 +12,16 @@ if __name__ == "__main__":
     grid_size = 40
     N = grid_size**3
     nu = 0.01
-    N_time_steps = 10
+    N_time_steps = 2
     T = 0.5
     U, L = 1, 1
-    N_realizations = 3
+    N_realizations = 1
     epochs_simulation = 10000
     t = jnp.array([T])
     # hidden_dim = 512 and learning_rate = 0.001 work well, do not change them.
     hidden_dim = 512
     learning_rate = 0.001
-    decay_rate = 0.95 #0.65
+    decay_rate = 0.90 #0.65
 
     ## Plotting the true solution
     grid = meshgrid(N).reshape((grid_size, grid_size, grid_size, 3))

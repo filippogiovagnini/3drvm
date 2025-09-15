@@ -45,19 +45,25 @@ This project generalizes the **Deep Random Vortex Method (DRVM)** [Qi & Meng, 20
 
 ## ⚙️ Installation
 
-No need to intall any dependecies, thanks to the [astral-sh/uv](https://github.com/astral-sh/uv) Python package and project manager! Installation is as simple as this:
+No need to intall any dependecies, thanks to the [astral-sh/uv](https://github.com/astral-sh/uv) Python package and project manager! Installation is as simple as this. First of all do:
 
 ```bash
-pip install uv
-git clone https://github.com/filippogiovagnini/3drvm.git
+# On macOS and Linux.
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+or
+```bash
+# On Windows.
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-Now you can already navigate to the folder ```src/```and run an experiment as follows:
-
+Then you can just do:
 ```bash
+git clone https://github.com/filippogiovagnini/3drvm.git
 cd 3drvm/src
 uv run experiment.py
 ```
+without worrying about dependencies between libraries.
 
 ## 📂 Repository Structure
 

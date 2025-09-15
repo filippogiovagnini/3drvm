@@ -6,6 +6,12 @@ sys.path.append(project_root)
 from num_solvers import *
 from interpolators import *
 from update_stepper import *
+import optax
+import jax
+import jax.numpy as jnp
+from jax import random
+
+
 
 def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rate = 0.01, num_epochs = 1000000, key = jax.random.PRNGKey(42), decay_rate = 0.95):
     """
@@ -29,7 +35,7 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
     U, L = 1, 1
     dt = T / N_steps
     grid_size = round(N**(1/3))
-    lattice = initial_X_meshgrid(N)
+    lattice = meshgrid(N)
     t = jnp.array([0.0])
     k = 2 * jnp.pi / L
 
@@ -155,7 +161,7 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
         U, L = 1, 1
         dt = T / N_steps
         Delta_eta = N**(-1/3)
-        lattice = initial_X_meshgrid(N)
+        lattice = meshgrid(N)
         k = 2 * jnp.pi / L
 
         # STEP 1: define and optimise loss function to compute the vorticity field
@@ -187,7 +193,7 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
             params, opt_state, loss = update(params, opt_state, lattice, X, Omega, Delta_eta)
             #loss_history[i, epoch] = loss
 
-            lattice_for_error = initial_X_meshgrid(1000000)
+            lattice_for_error = meshgrid(1000000)
 
             if epoch % 100 == 0:
 
@@ -206,7 +212,7 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
         ## STEP 2: Velocity field
         # I need first to compute the vorticity field on a grid
         grid_size = 120
-        lattice_new = initial_X_meshgrid(grid_size**3)
+        lattice_new = meshgrid(grid_size**3)
         vorticity_on_a_grid = VorticityNN(params, lattice_new)
         
         vorticity_on_a_grid = vorticity_on_a_grid.reshape((grid_size, grid_size, grid_size, 3))

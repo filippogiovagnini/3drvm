@@ -176,3 +176,26 @@ def main_vel_grad_vel(vorticity_on_a_grid: jnp.ndarray, X: jnp.ndarray, grid_siz
     nabla_u_at_X = trilinear_interpolation_nabla_u_prev(X, nabla_u_prev)
 
     return U_at_X, nabla_u_at_X
+
+def meshgrid(N, xmin=-1, xmax=1, ymin=-1, ymax=1, zmin=-1, zmax=1):
+    """
+    Generate a 3D mesh grid of particle positions.
+
+    Args:
+        N: Number of particles. (it must be a cube of an integer)
+
+    Returns:
+        X (N, 3): Particle positions in 3D space, where N is the total number of points.
+    """
+
+    grid_size = round(N**(1/3)) # Number of points along each axis
+    x = jnp.linspace(xmin, xmax, grid_size)
+    y = jnp.linspace(ymin, ymax, grid_size)
+    z = jnp.linspace(zmin, zmax, grid_size)
+
+    # Create a 3D mesh grid
+    X, Y, Z = jnp.meshgrid(x, y, z, indexing='ij')
+
+    # Flatten the grid into a list of 3D points
+    positions = jnp.stack([X.ravel(), Y.ravel(), Z.ravel()], axis=-1)
+    return positions

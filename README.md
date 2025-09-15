@@ -20,9 +20,9 @@ The method combines a **probabilistic vortex representation of the Navier–Stok
 
 ## 👩‍💻 Authors
 
-- **Giuseppe Bruno** (University of Bern)
-- **Paula Cordero-Encinar** (Imperial College London)
-- **Filippo Giovagnini** (Imperial College London)
+- **Giuseppe Bruno** [University of Bern](https://www.imsv.unibe.ch/about_us/staff/bruno_giuseppe/index_eng.html)
+- **Paula Cordero-Encinar** [Imperial College London](https://statml.io/students/paula-cordero-encinar/)
+- **Filippo Giovagnini** [Imperial College London](https://profiles.imperial.ac.uk/f.giovagnini23)
 
 ---
 
@@ -44,7 +44,7 @@ No need to intall any dependecies, thanks to the [astral-sh/uv](https://github.c
 
 ```bash
 pip install uv
-git clone https://github.com/your-username/3drvm.git
+git clone https://github.com/filippogiovagnini/3drvm.git
 ```
 
 Now you can already navigate to the folder ```src/```and run an experiment as follows:

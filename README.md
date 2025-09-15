@@ -40,7 +40,7 @@ This project generalizes the **Deep Random Vortex Method (DRVM)** [Qi & Meng, 20
 
 ## ⚙️ Installation
 
-No need to intall any dependecies, thanks to the [astral-uv/](https://github.com/astral-sh/uv) Python package and project manager! Installation is as simple as this:
+No need to intall any dependecies, thanks to the [astral-sh/uv](https://github.com/astral-sh/uv) Python package and project manager! Installation is as simple as this:
 
 ```bash
 pip install uv

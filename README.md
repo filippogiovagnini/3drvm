@@ -85,9 +85,9 @@ without worrying about dependencies between libraries.
 ## 🔹 Core Idea  
 The 3D Navier–Stokes equations in vorticity form  
 
-\[
+$$
 \partial_t \omega + (u \cdot \nabla)\omega - (\omega \cdot \nabla)u = \nu \Delta \omega,
-\]
+$$
 
 are approximated by a neural network \(\omega^\theta\) representing the vorticity field.  
 

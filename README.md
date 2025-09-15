@@ -18,6 +18,14 @@ The method combines a **probabilistic vortex representation of the Navier–Stok
 
 ---
 
+## 👩‍💻 Authors
+
+- **Giuseppe Bruno** (University of Bern)  
+- **Paula Cordero-Encinar** (Imperial College London)  
+- **Filippo Giovagnini** (Imperial College London)  
+
+---
+
 ## 📚 Background
 
 This project generalizes the **Deep Random Vortex Method (DRVM)** [Qi & Meng, 2022] and its implicit variant [Cherepanov, 2024] to **three-dimensional flows**.
@@ -32,10 +40,24 @@ This project generalizes the **Deep Random Vortex Method (DRVM)** [Qi & Meng, 20
 
 ## ⚙️ Installation
 
-Clone the repository and install dependencies:
+No need to intall any dependecies! Installation is as simple as this:
 
 ```bash
 pip install uv
 git clone https://github.com/your-username/3drvm.git
 cd 3drvm/src
-uv run experiment1.py
+uv run experiment.py
+```
+
+## 📂 Repository Structure
+
+3drvm/
+│
+├── src/                  # Core implementation in JAX
+│   ├── model.py          # Neural network
+│   ├── loss.py           # Loss function
+│   ├── experiment.py     # Loss function
+│   ├── solver.py         # Vortex/SDE solver
+│   └── utils.py          # Helpers
+│
+└── README.md

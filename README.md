@@ -70,12 +70,66 @@ without worrying about dependencies between libraries.
 ```bash
 3drvm/
 │
-├── src/                  # Core implementation in JAX
-│   ├── train.py          # Neural network
-│   ├── update_stepper.py           # Loss function
-│   ├── interpolators.py     # Loss function
-│   ├── num_solvers.py         # Vortex/SDE solver
-│   └── utilities.py          # Helpers
-├── experiment.py                  # Core implementation in JAX
+├── src/                    # Core implementation in JAX
+│   ├── train.py            # Train function
+│   ├── update_stepper.py   # Update particles positions and velocities
+│   ├── interpolators.py    # Some interpolation functions
+│   ├── num_solvers.py      # Classical numerical analysis solvers
+│   └── utilities.py        # Helpers
+├── experiment.py           # Experiment with the Taylor Green
 └── README.md
 ```
+
+---
+
+## 🔹 Core Idea  
+The 3D Navier–Stokes equations in vorticity form  
+
+\[
+\partial_t \omega + (u \cdot \nabla)\omega - (\omega \cdot \nabla)u = \nu \Delta \omega,
+\]
+
+are approximated by a neural network \(\omega^\theta\) representing the vorticity field.  
+
+Instead of relying on the **Biot–Savart kernel** (often unavailable in complex geometries), we exploit a **probabilistic vortex representation formula**:  
+
+\[
+\int_D \omega^k(y,t)\phi^k(y)\,dy \;=\; \int_D \mathbb{E}\!\left[\Omega^k(\xi,t)\,\phi^k(X(\xi,t))\right] d\xi,
+\]
+
+where the stochastic flow \(X(\xi,t)\) evolves under the velocity field and Brownian perturbations.  
+
+---
+
+## 🔹 Loss Function  
+Training minimizes the discrepancy between \(\omega^\theta\) and the true vorticity, but **without requiring explicit knowledge of \(\omega\)**.  
+
+Using the representation formula, we define a **Monte Carlo–approximated implicit loss**:  
+
+\[
+\mathcal{L}(\theta,t) = \sum_{i=1}^N \Big( \,|\omega^\theta(\eta^i,t)|^2 - \tfrac{2}{M}\sum_{j=1}^M \Omega^i_j(t) \cdot \omega^\theta(X^i_j(t),t) \,\Big).
+\]
+
+This makes the method **grid-free, implicit, and data-efficient**.  
+
+---
+
+## 🔹 Algorithm  
+1. Initialize particles \((X^i, \Omega^i)\) via Brownian dynamics.  
+2. Train \(\omega^\theta\) by minimizing \(\mathcal{L}(\theta,t)\).
+3. Recover velocity \(u^\theta\) by solving  
+   \[
+   \nabla \times u^\theta = \omega^\theta.
+   \]
+4. Update particle system \((X^i, G^i, \Omega^i)\).  
+5. Iterate over time steps.  
+
+---
+
+## 🔹 Advantages  
+- **Grid-free**: no need for structured meshes.  
+- **Boundary-aware**: incorporates wall effects implicitly.  
+- **Kernel-free**: avoids explicit Biot–Savart evaluation.  
+- **Scalable**: Monte Carlo formulation suitable for high dimensions.  
+
+---

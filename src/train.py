@@ -6,6 +6,7 @@ sys.path.append(project_root)
 from num_solvers import *
 from interpolators import *
 from update_stepper import *
+from initial_condition import *
 import optax
 import jax
 import jax.numpy as jnp
@@ -31,26 +32,6 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
         positions (jnp.ndarray): Array of shape (N, 3) containing 3D points.
     """
 
-    # Initialization
-    U, L = 1, 1
-    dt = T / N_steps
-    grid_size = round(N**(1/3))
-    lattice = meshgrid(N)
-    t = jnp.array([0.0])
-    k = 2 * jnp.pi / L
-
-    initial_velocity_field = velocity_exact_solution_on_grid(t, lattice.reshape(grid_size, grid_size, grid_size, 3), U, L, nu)
-    vorticity_0_X = jnp.sqrt(3) * k * initial_velocity_field
-    vorticity_0_X = vorticity_0_X.reshape((grid_size**3, 3))  # Reshape to (N, 3)
-
-    size1 = vorticity_0_X.shape[0]
-    size2 = 3
-
-    # This has shape (m, size1, 3)
-    Omega_0 = vorticity_0_X
-
-    nabla_u_history = []
-
     # A helper function to randomly initialize weights and biases
     # for a dense neural network layer
     def random_layer_params(m, n, key, scale=1e-2):
@@ -65,6 +46,7 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
     
     def VorticityNN(params, X):
         # per-example predictions
+
         activations = X
         for w, b in params[:-1]:
             outputs = jnp.dot(activations, w) + b
@@ -72,7 +54,7 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
 
         final_w, final_b = params[-1]
         output = jnp.dot(activations, final_w) + final_b
-        return output 
+        return output
 
     ### JUST ADDED
     def periodic_penalty(params, batch_size=64):
@@ -101,21 +83,7 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
         loss_z = jnp.mean((VorticityNN(params, pos) - VorticityNN(params, neg))**2)
 
         return loss_x + loss_y + loss_z
-
-
-
-    '''    # Define loss function given by Eq. (1) in the document
-    def loss_function(params, eta, X, Omega, Delta_eta):
-        N = X.shape[1]
-        w_eta = VorticityNN(params, eta)
-        w_X = VorticityNN(params, X)
-        #loss = jnp.multiply(w_eta**2, Delta_eta) - 1/N * 2 * jnp.multiply(Omega, w_X)
-        loss = w_eta**2 -  jnp.mean(2 * jnp.multiply(Omega, w_X), axis = 0)
-        #loss = (w_X-Omega)**2
-        return jnp.mean(loss)
-    '''
     
-
     def loss_function(params, eta, X, Omega, Delta_eta, lambda_bc=1.0):
         N = X.shape[1]
         w_eta = VorticityNN(params, eta)
@@ -129,21 +97,6 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
 
         return core_loss + lambda_bc * bc_loss
     
-    input_dim = 3
-    output_dim = 3
-    params = init_params(key, input_dim, hidden_dim, output_dim)
-
-    schedule = optax.exponential_decay(
-        init_value=learning_rate, 
-        transition_steps=1000,
-        decay_rate=decay_rate
-    )
-
-    optimizer = optax.adam(schedule)
-    #opt_state = optimizer.init(params)
-
-    loss_history = jnp.zeros((N_steps, int(num_epochs/100)))
-
     @jax.jit
     def update(params, opt_state, eta, X, Omega, Delta_eta):
         loss, grads = jax.value_and_grad(loss_function)(params, eta, X, Omega, Delta_eta)
@@ -231,6 +184,41 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
         Omega = update_Omega(G_t0, jnp.tile(vorticity_0_X, (N_realizations,1,1)))
 
         return X, vorticity, Omega, key, params, loss_history_step
+
+    # Initialization
+    U, L = 1, 1
+    #dt = T / N_steps
+    grid_size = round(N**(1/3))
+    lattice = meshgrid(N)
+    t = jnp.array([0.0])
+    k = 2 * jnp.pi / L
+
+    initial_velocity_field = velocity_exact_solution_on_grid(t, lattice.reshape(grid_size, grid_size, grid_size, 3), U, L, nu)
+    vorticity_0_X = jnp.sqrt(3) * k * initial_velocity_field
+    vorticity_0_X = vorticity_0_X.reshape((grid_size**3, 3))  # Reshape to (N, 3)
+
+    #size1 = vorticity_0_X.shape[0]
+    #size2 = 3
+
+    # This has shape (m, size1, 3)
+    Omega_0 = vorticity_0_X
+
+    nabla_u_history = []
+    
+    input_dim = 3
+    output_dim = 3
+    params = init_params(key, input_dim, hidden_dim, output_dim)
+
+    schedule = optax.exponential_decay(
+        init_value=learning_rate, 
+        transition_steps=1000,
+        decay_rate=decay_rate
+    )
+
+    optimizer = optax.adam(schedule)
+    #opt_state = optimizer.init(params)
+
+    loss_history = jnp.zeros((N_steps, int(num_epochs/100)))
     
     positions = jnp.tile(lattice, (N_realizations, 1, 1))  
     vorticity = jnp.tile(vorticity_0_X, (N_realizations, 1, 1))
@@ -240,3 +228,20 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
         loss_history = loss_history.at[i, :].set(loss_history_step)
 
     return positions, vorticity, loss_history
+
+if __name__ == "__main__":
+    key = jax.random.PRNGKey(42)
+    N = 5**3
+    N_steps = 1
+    N_realizations = 1
+    T = 0.1
+    nu = 0.1
+    hidden_dim = 20
+    learning_rate = 0.001
+    num_epochs = 100
+
+    positions, vorticity, loss_history = train(N, N_steps, N_realizations, T, nu, hidden_dim, learning_rate, num_epochs, key)
+
+    print("Final positions shape:", positions.shape)
+    print("Final vorticity shape:", vorticity.shape)
+    print("Loss history shape:", loss_history.shape)

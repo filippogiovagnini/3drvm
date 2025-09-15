@@ -39,6 +39,7 @@ This project generalizes the **Deep Random Vortex Method (DRVM)** [Qi & Meng, 20
 - Qi, J., Meng, X. *Deep Random Vortex Method for 2D Navier–Stokes Equations.* 2022.  
 - Cherepanov, A. *Neural networks based random vortex methods.* 2024.  
 - Cherepanov, A. *A Monte Carlo method for incompressible fluid dynamics.* 2023.  
+- Giovagnini, F., Crisan, D. *A uniform particle approximation to the Navier–Stokes-alpha models in three dimensions with advection noise.* 2025.
 
 ---
 

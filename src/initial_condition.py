@@ -60,22 +60,3 @@ def velocity_exact_solution_on_grid(t: jnp.ndarray, pos_grid: jnp.ndarray, U: fl
     flat_pos = pos_grid.reshape(-1, 3)
     flat_vel = jax.vmap(eval_point)(flat_pos)
     return flat_vel.reshape(pos_grid.shape)
-
-# just testing
-if __name__ == "__main__":
-
-    # Initialization
-    U, L = 1, 1
-    N_steps = 1
-    T = 1
-    N = 20**3
-    dt = T / N_steps
-    grid_size = round(N**(1/3))
-    lattice = meshgrid(N)
-    t = jnp.array([0.0])
-    k = 2 * jnp.pi / L
-    nu = 0.1
-
-    initial_velocity_field = velocity_exact_solution_on_grid(t, lattice.reshape(grid_size, grid_size, grid_size, 3), U, L, nu)
-
-    plot_vectors(lattice.reshape(grid_size, grid_size, grid_size, 3), initial_velocity_field)

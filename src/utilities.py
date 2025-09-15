@@ -4,6 +4,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 sys.path.append(project_root)
 
 import matplotlib.pyplot as plt
+import jax.numpy as jnp
 
 
 def plot_vectors(pos, vec, sample_rate=2, zoom_out_factor=1.2, time_steps = 3, nu = 0.01, epochs_simulation = 1000, realizations = 2, final_time = 0.1, label="Std"):
@@ -66,3 +67,81 @@ def plot_vectors(pos, vec, sample_rate=2, zoom_out_factor=1.2, time_steps = 3, n
     ax.set_title(f"{label}_Time_steps: " + str(time_steps) + ", nu = " + str(nu) + ", epochs = " + str(epochs_simulation) + ", realizations = " + str(realizations) + ", final time = " + str(final_time))
     ax.legend()
     plt.savefig(f"experiment_{label}.png")  # Save the plot as an image
+
+
+def plot_loss_history_epoch(loss_history):
+    """
+    Plots the loss history over epochs.
+    """
+    plt.figure(figsize=(12, 12))
+    N_steps, _ = loss_history.shape
+
+    for i in range(N_steps):
+        epoch_n = i+1
+        plt.plot(loss_history[i, :], label = f"Step {epoch_n}")
+
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.legend()
+
+    plt.savefig("loss.png")
+
+
+def plot_vector_field_projection(field, plane='xy', slice_index=None, scale=1.0, label="std"):
+    """
+    Plots a 2D projection of a 3D vector field onto a specified plane.
+
+    Args:
+        - field: jax.numpy.ndarray of shape (N, N, N, 3), the 3D vector field.
+        - plane: str, the plane to project onto: 'xy', 'xz', or 'yz'.
+        - slice_index: int or None, index to slice along the orthogonal axis.
+                    If None, it defaults to the middle of the field.
+        - scale: float, scale factor for vector arrows in the quiver plot.
+    Returns:
+        None (saves the plot as an image file)
+    """
+    plt.figure(figsize=(12, 12))
+    
+    M = field.shape[0]
+    
+    if plane not in {'xy', 'xz', 'yz'}:
+        raise ValueError("Plane must be one of 'xy', 'xz', or 'yz'.")
+
+    if slice_index is None:
+        slice_index = M // 2
+
+    if plane == 'xy':
+        vectors = field[:, :, slice_index, :]
+        U = vectors[:, :, 0]
+        V = vectors[:, :, 1]
+        x = y = jnp.arange(M)
+        X, Y = jnp.meshgrid(x, y, indexing='ij')
+        plt.quiver(X, Y, U, V, scale=scale)
+
+    elif plane == 'xz':
+        vectors = field[:, slice_index, :, :]
+        U = vectors[:, :, 0]
+        V = vectors[:, :, 2]
+        x = y = jnp.arange(M)
+        X, Y = jnp.meshgrid(x, y, indexing='ij')
+        plt.quiver(X, Y, U, V, scale=scale)
+
+    elif plane == 'yz':
+        vectors = field[slice_index, :, :, :]
+        U = vectors[:, :, 1]
+        V = vectors[:, :, 2]
+        x = y = jnp.arange(M)
+        X, Y = jnp.meshgrid(x, y, indexing='ij')
+        plt.quiver(X, Y, U, V, scale=scale)
+    plt.axis('equal')
+    plt.tick_params(
+    axis='both',
+    which='both',
+    bottom=False,
+    top=False,
+    left=False,      
+    right=False,    
+    labelbottom=False,
+    labelleft=False  
+    )
+    plt.savefig(f"velocity_projection_{label}.png")

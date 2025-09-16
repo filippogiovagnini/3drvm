@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import jax.numpy as jnp
 
 
+
+
 def plot_vectors(pos, vec, sample_rate=2, zoom_out_factor=1.2, time_steps = 3, nu = 0.01, epochs_simulation = 1000, realizations = 2, final_time = 0.1, label="Std"):
     """
     Plots particles at pos[i, j, k, :] with vectors vec[i, j, k, :].

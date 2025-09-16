@@ -1,8 +1,3 @@
-import os
-import sys
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
-sys.path.append(project_root)
-
 import jax
 import jax.numpy as jnp
 from jax import jit
@@ -27,8 +22,10 @@ def update_step_X(X: jnp.ndarray, U: jnp.ndarray, dt: float, nu: float, key: jax
     m, N, d = X.shape[0], X.shape[1],  X.shape[2]
     noise = jax.random.normal(key=key, shape=(m, N, d))
     X_next = X + dt * U + jnp.sqrt(2 * nu * dt) * noise
-    X_next = 2 * ((X_next + 1)/2 % 1) - 1        # Periodic boundary conditions
+    # Apply periodic boundary conditions
+    X_next = 2 * ((X_next + 1)/2 % 1) - 1
     return X_next
+
 
 @jax.jit
 def update_step_G(nabla_u_prev: jnp.ndarray, dt: float) -> jnp.ndarray:
@@ -40,7 +37,7 @@ def update_step_G(nabla_u_prev: jnp.ndarray, dt: float) -> jnp.ndarray:
         dt: Scalar time step.
 
     Returns:
-        G_ts (T, m, N, d, d): Time evolution of G (ordered forward in time).
+        G_ts (T, m N, d, d): Time evolution of G (ordered forward in time).
     """
     def backward_step(current_G: jnp.ndarray, inputs):
         """
@@ -60,11 +57,17 @@ def update_step_G(nabla_u_prev: jnp.ndarray, dt: float) -> jnp.ndarray:
         new_G = current_G - (-dt) * update
         return new_G, new_G
 
+    # Get dimensions from nabla_u_prev.
     T, m, N, d, _ = nabla_u_prev.shape
 
+    # Initialize G as the identity matrix for each particle.
     G_initial = jnp.tile(jnp.eye(d), (m, N, 1, 1))
+    # Perform the backward integration over time.
+    # Note: We scan in the natural (forward) order then reverse the result.
     final_G, G_series = jax.lax.scan(backward_step, G_initial, nabla_u_prev)
+    # Reverse the time axis to restore forward time ordering.
     return final_G
+
 
 @jax.jit
 def update_Omega(G_t0: jnp.ndarray, vorticity_0: jnp.ndarray) -> jnp.ndarray:
@@ -78,5 +81,6 @@ def update_Omega(G_t0: jnp.ndarray, vorticity_0: jnp.ndarray) -> jnp.ndarray:
     Returns:
         Omega (m, N, d): Updated Omega values.
     """
+    # Compute the initial contribution from time step 0.
     Omega = jnp.matmul(G_t0, vorticity_0[:, :, :, None]).squeeze(-1)
     return Omega

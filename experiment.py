@@ -9,14 +9,14 @@ from src.train import *
 
 if __name__ == "__main__":
 
-    grid_size = 40
+    grid_size = 20
     N = grid_size**3
     nu = 0.01
-    N_time_steps = 2
+    N_time_steps = 5
     T = 0.5
     U, L = 1, 1
-    N_realizations = 1
-    epochs_simulation = 10000
+    N_realizations = 2
+    epochs_simulation = 2000
     t = jnp.array([T])
     # hidden_dim = 512 and learning_rate = 0.001 work well, do not change them.
     hidden_dim = 512
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     plot_vector_field_projection((1/10)*true_velocity, label="True")
 
     ## Training the model
-    positions, vorticity, loss_history  = train(N, N_time_steps, N_realizations, T, nu, hidden_dim, learning_rate, num_epochs = epochs_simulation, key = random.PRNGKey(42), decay_rate=decay_rate, U=U, L=L)
+    positions, vorticity, loss_history  = train(N, N_time_steps, N_realizations, T, nu, hidden_dim, learning_rate, num_epochs = epochs_simulation, key = random.PRNGKey(42), decay_rate=decay_rate)
     positions = positions.reshape((N_realizations, grid_size, grid_size, grid_size, 3))
     vorticity = vorticity.reshape((N_realizations, grid_size, grid_size, grid_size, 3))
 

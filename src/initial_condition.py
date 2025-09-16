@@ -8,10 +8,10 @@ import jax.numpy as jnp
 from num_solvers import *
 from utilities import *
 
-@jax.jit
-def velocity_exact_solution(t: jnp.ndarray, X: jnp.ndarray, U: float, L: float, nu: float) -> jnp.ndarray:
+def velocity_exact_solution(t, X, U, L, nu):
     '''
     Exact solution for the periodic boundary condition problem. The domain is [-L, L]^3.
+    
     Args:
         t: time variable. Shape (1,).
         X: spatial variable. Shape (3,).
@@ -41,8 +41,7 @@ def velocity_exact_solution(t: jnp.ndarray, X: jnp.ndarray, U: float, L: float, 
 
     return jnp.array([u_x, u_y, u_z])
 
-@jax.jit
-def velocity_exact_solution_on_grid(t: jnp.ndarray, pos_grid: jnp.ndarray, U: float, L: float, nu: float) -> jnp.ndarray:
+def velocity_exact_solution_on_grid(t, pos_grid, U, L, nu):
     """
     Vectorized version of velocity_exact_solution.
     

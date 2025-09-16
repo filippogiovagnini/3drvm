@@ -1,10 +1,18 @@
 # 3drvm
 
-This repository contains the **JAX implementation** of the **Implicit Deep Random Vortex Network (3D-iDRVN)**, a neural network–based Random Vortex Method for simulating incompressible fluid flows in **three-dimensional, wall-bounded domains**.
+This repository contains the **JAX implementation** of a neural network–based Random Vortex Method for simulating incompressible fluid flows in **three-dimensional, wall-bounded domains**.
 
 Unlike classical numerical solvers (finite differences, finite elements, spectral methods), this approach is **grid-free** and avoids explicit evaluation of the **Biot–Savart kernel**, making it suitable for geometrically complex domains, although, for now, we implemented the method just for the three-dimensional torus.
 
 The method combines a **probabilistic vortex representation of the Navier–Stokes equations** with deep neural networks and a novel **loss function**.
+
+---
+
+## 💻 Disclaimer
+
+This code is a research prototype and is provided *as is*, without warranties.  
+It is still a work in progress and may change in future versions.  
+Use at your own risk.
 
 ---
 

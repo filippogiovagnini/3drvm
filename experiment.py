@@ -9,14 +9,14 @@ from src.train import *
 
 if __name__ == "__main__":
 
-    grid_size = 40
+    grid_size = 30
     N = grid_size**3
     nu = 0.01
-    N_time_steps = 4
+    N_time_steps = 3
     T = 0.5
     U, L = 1, 1
     N_realizations = 3
-    epochs_simulation = 15000
+    epochs_simulation = 10000
     t = jnp.array([T])
     hidden_dim = 512
     learning_rate = 0.001
@@ -28,9 +28,23 @@ if __name__ == "__main__":
     vorticity_true = -compute_minus_curl(true_velocity)
     plot_vector_field_projection((1/50)*vorticity_true, label="True")
 
-    ## Training the model
-    positions, vorticity, loss_history  = train(N, N_time_steps, N_realizations, T, nu, hidden_dim, learning_rate, num_epochs = epochs_simulation, key = random.PRNGKey(42), decay_rate=decay_rate)
+
+    params = {
+        "N": N,
+        "N_steps": N_time_steps,
+        "N_realizations": N_realizations,
+        "T": T,
+        "nu": nu,
+        "hidden_dim": hidden_dim,
+        "learning_rate": learning_rate,
+        "num_epochs": epochs_simulation,
+        "key": random.PRNGKey(42),
+        "decay_rate": decay_rate,
+    }
+
+    positions, vorticity, loss_history = train(**params)
+
     positions = positions.reshape((N_realizations, grid_size, grid_size, grid_size, 3))
     vorticity = vorticity.reshape((N_realizations, grid_size, grid_size, grid_size, 3))
 
-    plot_vector_field_projection((1/50)*vorticity[0, ...], label="Ours")
+    plot_vector_field_projection((1/50)*vorticity.mean(axis=0), label="Ours")

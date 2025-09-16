@@ -16,7 +16,6 @@ def compute_minus_curl(F):
     
     Args:
         F: JAX array of shape (grid_width, grid_width, grid_width, 3), where F[..., 0] = Fx, F[..., 1] = Fy, F[..., 2] = Fz and where the positions of the grid are assumed to be (i, j, k) = (0, 0, 0), (1, 0, 0), ..., (grid_x - 1, grid_y - 1, grid_z - 1).
-        h: Grid spacing (assumed uniform in all directions).
 
     Returns:
         C: JAX array of shape (grid_width, grid_width, grid_width, 3) representing the curl vector field.
@@ -71,7 +70,7 @@ def velocity_from_vorticity(vorticity_on_grid):
     return u
     
 
-def compute_nabla_u_prev(U):
+def nabla(U):
     """
     Compute the gradient of a vector field U on a 3D grid.
 
@@ -86,13 +85,10 @@ def compute_nabla_u_prev(U):
                                               [dUy/dx, dUy/dy, dUy/dz],
                                               [dUz/dx, dUz/dy, dUz/dz]].
     """
-    # Extract components of the vector field
     Ux, Uy, Uz = U[..., 0], U[..., 1], U[..., 2]
+    grid_size = U.shape[0]
+    h = 2 / grid_size
 
-    grid_size = U.shape[0]  # Assuming cubic grid
-    h = 2 / grid_size  # Grid spacing
-
-    # Compute partial derivatives using central differences
     dUx_dx = (jnp.roll(Ux, -1, axis=0) - jnp.roll(Ux, 1, axis=0)) / (2 * h)
     dUx_dy = (jnp.roll(Ux, -1, axis=1) - jnp.roll(Ux, 1, axis=1)) / (2 * h)
     dUx_dz = (jnp.roll(Ux, -1, axis=2) - jnp.roll(Ux, 1, axis=2)) / (2 * h)
@@ -105,16 +101,15 @@ def compute_nabla_u_prev(U):
     dUz_dy = (jnp.roll(Uz, -1, axis=1) - jnp.roll(Uz, 1, axis=1)) / (2 * h)
     dUz_dz = (jnp.roll(Uz, -1, axis=2) - jnp.roll(Uz, 1, axis=2)) / (2 * h)
 
-    # Combine partial derivatives into the gradient tensor
-    nabla_u_prev = jnp.stack([
+    nabla = jnp.stack([
         jnp.stack([dUx_dx, dUx_dy, dUx_dz], axis=-1),
         jnp.stack([dUy_dx, dUy_dy, dUy_dz], axis=-1),
         jnp.stack([dUz_dx, dUz_dy, dUz_dz], axis=-1)
     ], axis=-2)
 
-    return nabla_u_prev
+    return nabla
 
-def main_vel_grad_vel(vorticity_on_a_grid, X, grid_size=1000000):
+def main_vel_grad_vel(vorticity_on_a_grid, X):
     """"
     Args:
         vorticity: function. Takes a 3D position (x, y, z) and returns a 3D vector.
@@ -125,21 +120,14 @@ def main_vel_grad_vel(vorticity_on_a_grid, X, grid_size=1000000):
         nabla_u (N, 3, 3): Gradient of the velocity field at particle positions.
     """
 
-    # Grid spacing
-    h = 2 / grid_size
+    U = velocity_from_vorticity(vorticity_on_a_grid)
 
-    # Compute the velocity field
-    U = velocity_from_vorticity(vorticity_on_a_grid, h, grid_size)
-
-    # Compute the gradient of the velocity field
-    nabla_u_prev = compute_nabla_u_prev(U)
+    nabla_U = nabla(U)
 
     U_at_X = trilinear_interpolation_U(X, U)
+    nabla_U_at_X = trilinear_interpolation_nabla_u_prev(X, nabla_U)
 
-    # Compute the gradient of the velocity field at particle positions
-    nabla_u_at_X = trilinear_interpolation_nabla_u_prev(X, nabla_u_prev)
-
-    return U_at_X, nabla_u_at_X
+    return U_at_X, nabla_U_at_X
 
 
 def trilinear_interpolation_U(X, U):
@@ -153,6 +141,7 @@ def trilinear_interpolation_U(X, U):
     Returns:
         jnp.ndarray: Interpolated velocities at particle positions, shape (m, N, 3).
     """
+
     grid_size = U.shape[0]  # Assuming cubic grid
     h = 2 / grid_size  # Grid spacing
 
@@ -280,19 +269,28 @@ if __name__ == "__main__":
     nu=0.1
     k = 2 * jnp.pi / L
 
-    grid1 = meshgrid(10**3).reshape((10, 10, 10, 3))
+    grid1 = meshgrid(grid_size**3).reshape((grid_size, grid_size, grid_size, 3))
     grid = meshgrid(N).reshape((grid_size, grid_size, grid_size, 3))
 
+    new = jnp.stack([grid, grid1], axis=0)
+
+
     true_velocity = velocity_exact_solution_on_grid(t, grid, U, L=1, nu=nu)
+    true_nabla_u = nabla(true_velocity)
     true_velocity_in = velocity_exact_solution_on_grid(t, grid1, U, L=1, nu=nu)
     print("The norm of the true velocity field is ", (true_velocity**2).sum(axis=-1).reshape(grid_size**3).mean())
     vorticity = -compute_minus_curl(true_velocity)
-    velocity = velocity_from_vorticity(vorticity)
 
-    velocity_in = trilinear_interpolation_U(grid1, velocity)
+    grid = grid.reshape(grid_size**3, 3)
+    grid = grid[None, ...]
+    new = new.reshape(2, grid_size**3, 3)
+    print("The shape of the grid is ", new.shape)
+    print("dim of the grid ", new.ndim)
+    velocity, nabla_u = main_vel_grad_vel(vorticity, new)
+    print("dim of the velocity ", velocity.ndim)
 
-    print("The norm of the computed velocity field is ", (velocity**2).sum(axis=-1).reshape(grid_size**3).mean())
+    print("The norm of the computed velocity field is ", (velocity**2).sum(axis=-1).reshape(2, grid_size**3).mean())
 
-    print(((velocity - true_velocity)**2).sum(axis=-1).shape)
-    print("Norm of the difference:", (((velocity - true_velocity) * vorticity)**2).sum(axis=-1).reshape(grid_size**3).mean())
-    print("Norm of the difference in different positions:", (((velocity_in - true_velocity_in))**2).sum(axis=-1).reshape(10**3).mean())
+    #print(((velocity - true_velocity)**2).sum(axis=-1).shape)
+    print("Norm of the difference in different positions:", (((velocity.reshape(2, grid_size, grid_size, grid_size, 3) - true_velocity[None, ...])**2).sum(axis=-1).reshape(2, grid_size**3).mean()))
+    #print("Norm of the difference of the nablas:", ((nabla_u - true_nabla_u)**2).sum(axis=(-1, -2)).reshape(grid_size**3).mean())

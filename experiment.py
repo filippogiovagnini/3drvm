@@ -15,8 +15,8 @@ if __name__ == "__main__":
     N_time_steps = 2
     T = 0.5
     U, L = 1, 1
-    N_realizations = 1
-    epochs_simulation = 10000
+    N_realizations = 5
+    epochs_simulation = 15000
     t = jnp.array([T])
     # hidden_dim = 512 and learning_rate = 0.001 work well, do not change them.
     hidden_dim = 512

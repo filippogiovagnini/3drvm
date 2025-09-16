@@ -31,26 +31,6 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
         positions (jnp.ndarray): Array of shape (N, 3) containing 3D points.
     """
 
-    # Initialization
-    U, L = 1, 1
-    dt = T / N_steps
-    grid_size = round(N**(1/3))
-    lattice = meshgrid(N)
-    t = jnp.array([0.0])
-    k = 2 * jnp.pi / L
-
-    initial_velocity_field = velocity_exact_solution_on_grid(t, lattice.reshape(grid_size, grid_size, grid_size, 3), U, L, nu)
-    vorticity_0_X = jnp.sqrt(3) * k * initial_velocity_field
-    vorticity_0_X = vorticity_0_X.reshape((grid_size**3, 3))  # Reshape to (N, 3)
-
-    size1 = vorticity_0_X.shape[0]
-    size2 = 3
-
-    # This has shape (m, size1, 3)
-    Omega_0 = vorticity_0_X
-
-    nabla_u_history = []
-
     # A helper function to randomly initialize weights and biases
     # for a dense neural network layer
     def random_layer_params(m, n, key, scale=1e-2):
@@ -129,6 +109,33 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
 
         return core_loss + lambda_bc * bc_loss
     
+    @jax.jit
+    def update(params, opt_state, eta, X, Omega, Delta_eta):
+        loss, grads = jax.value_and_grad(loss_function)(params, eta, X, Omega, Delta_eta)
+        updates, opt_state = optimizer.update(grads, opt_state)
+        params = optax.apply_updates(params, updates)
+        return params, opt_state, loss
+
+    # Initialization
+    U, L = 1, 1
+    dt = T / N_steps
+    grid_size = round(N**(1/3))
+    lattice = meshgrid(N)
+    t = jnp.array([0.0])
+    k = 2 * jnp.pi / L
+
+    initial_velocity_field = velocity_exact_solution_on_grid(t, lattice.reshape(grid_size, grid_size, grid_size, 3), U, L, nu)
+    vorticity_0_X = -compute_minus_curl(initial_velocity_field)
+    vorticity_0_X = vorticity_0_X.reshape((grid_size**3, 3))  # Reshape to (N, 3)
+
+    size1 = vorticity_0_X.shape[0]
+    size2 = 3
+
+    # This has shape (m, size1, 3)
+    Omega_0 = vorticity_0_X
+
+    nabla_u_history = []
+
     input_dim = 3
     output_dim = 3
     params = init_params(key, input_dim, hidden_dim, output_dim)
@@ -143,14 +150,8 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
     #opt_state = optimizer.init(params)
 
     loss_history = jnp.zeros((N_steps, int(num_epochs/100)))
-
-    @jax.jit
-    def update(params, opt_state, eta, X, Omega, Delta_eta):
-        loss, grads = jax.value_and_grad(loss_function)(params, eta, X, Omega, Delta_eta)
-        updates, opt_state = optimizer.update(grads, opt_state)
-        params = optax.apply_updates(params, updates)
-        return params, opt_state, loss
     
+
     def step_training(i, val, params):
         X, vorticity, Omega, rng = val
 
@@ -199,15 +200,17 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
 
                 t_ = jnp.array([i * dt])
 
-                velocity_field_at_t = velocity_exact_solution_on_grid(t_, lattice_for_error, U, L, nu)
-                print("The norm of the true velocity field is ", jnp.linalg.norm(velocity_field_at_t))
+                velocity_field_at_t = velocity_exact_solution_on_grid(t_, lattice_for_error.reshape(100, 100, 100, 3), U, L, nu)
 
-                vorticity_at_t = jnp.sqrt(3) * k * velocity_field_at_t
+                vorticity_at_t = -compute_minus_curl(velocity_field_at_t).reshape((1000000, 3))
                 error_norm = jnp.mean((VorticityNN(params, lattice_for_error) - vorticity_at_t)**2)
 
                 #error_norm = jnp.sum((VorticityNN(params, X) - vorticity_0_X)**2)
                 loss_history_step.append(loss)
                 print(f"Current time step: {i * dt}, Epoch {epoch}, Loss: {loss}, Error_norm: {error_norm}. The learning rate is {schedule(epoch)}")
+                
+        
+
 
         vorticity = VorticityNN(params, X)
 
@@ -220,7 +223,7 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
         vorticity_on_a_grid = vorticity_on_a_grid.reshape((grid_size, grid_size, grid_size, 3))
         # Compute the velocity field and its gradient
         X_flat = X.reshape((-1, 3))  # Flatten the positions for the velocity computation
-        U, nabla_U = main_vel_grad_vel(vorticity_on_a_grid, X, grid_size=grid_size)
+        U, nabla_U = main_vel_grad_vel(vorticity_on_a_grid, X)
         
         nabla_U = nabla_U.reshape((N_realizations, N, 3, 3))  # Reshape to match the number of realizations and particles
         U = U.reshape((N_realizations, N, 3))  # Reshape to match the number of realizations and particles
@@ -229,9 +232,9 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
         
         ## STEP 3: Update the positions of the particles
         X = update_step_X(X, U, dt, nu, key, 10) 
-        G_t0 = update_step_G(jnp.stack(nabla_u_history,axis=0), dt)
+        G_t0 = update_step_G(jnp.stack(nabla_u_history, axis=0), dt)
 
-        Omega = update_Omega(G_t0, jnp.tile(vorticity_0_X, (N_realizations,1,1)))
+        Omega = update_Omega(G_t0, jnp.tile(vorticity_0_X, (N_realizations, 1, 1)))
 
         return X, vorticity, Omega, key, params, loss_history_step
     

@@ -7,9 +7,7 @@ import jax
 import jax.numpy as jnp
 from jax.scipy.sparse.linalg import cg
 import matplotlib.pyplot as plt
-
-grid_size = 50000
-h = 2/grid_size
+from initial_condition import *
 
 def compute_minus_curl(F):
     """
@@ -44,42 +42,33 @@ def compute_minus_curl(F):
 
     return jnp.stack([Cx, Cy, Cz], axis=-1)
 
-def apply_laplacian(U_flat):
+def apply_laplacian(U):
     """
     Applies the 3D Laplacian to a flattened array (vector field).
     Args:
-        U_flat: Flattened 3D vector field of shape (N³, 3).
+        U_flat: Flattened 3D vector field of shape (grid_size, grid_size, grid_size, 3).
         grid_size: Size of the grid.
     Returns:
-        L: Flattened Laplacian of U.
+        L: Laplacian of U.
     """
-    grid_size = U_flat.shape[0]  # Assuming U_flat is a flattened 3D vector field
-    grid_size_2 = int(round(grid_size ** (1/3))) 
-    U = U_flat.reshape((grid_size_2, grid_size_2, grid_size_2, 3))  # Reshape into 3D vector field
+    grid_size = U.shape[0]  # Assuming U is a 3D vector field
+    h = 2 / grid_size  # Grid spacing
     L = -6 * U
     L += jnp.roll(U, 1, axis=0) + jnp.roll(U, -1, axis=0)
     L += jnp.roll(U, 1, axis=1) + jnp.roll(U, -1, axis=1)
     L += jnp.roll(U, 1, axis=2) + jnp.roll(U, -1, axis=2)
-    return (L / h**2).reshape((-1, 3))  # Flatten back to 2D (grid_width³, 3)
+    return L / h**2  # Flatten back to 2D (grid_width, grid_width, grid_width, 3)
 
-
-def velocity_from_vorticity(initial_vorticity, h, grid_size):
+def velocity_from_vorticity(vorticity_on_grid):
     """
     Compute the velocity field from the vorticity field using the Poisson equation.
     Args:
         initial_vorticity: Initial vorticity field. Shape (grid_width, grid_width, grid_width, 3). This must be the vorticity field computed in a h uniformly spaced grid with in the domain [-1, 1]³. This has to result in a shape (grid_width, grid_width, grid_width, 3).
         h: Grid spacing.
     """
-    grid_size = initial_vorticity.shape[0]  # Assuming cubic grid
-    F = compute_minus_curl(initial_vorticity)
-    F_flat = F.reshape((-1, 3))  # Shape: (grid_width³, 3)
-
-    # Solve using Conjugate Gradient (CG) with matrix-free multiplication
-    u_flat, _ = cg(apply_laplacian, F_flat)
-
-    # Reshape the solution back to (grid_width, grid_width, grid_width, 3)
-    U = u_flat.reshape((grid_size, grid_size, grid_size, 3))
-    return U
+    F = compute_minus_curl(vorticity_on_grid)
+    u, _ = cg(apply_laplacian, F)
+    return u
     
 
 def compute_nabla_u_prev(U):
@@ -278,3 +267,32 @@ def meshgrid(N, xmin=-1, xmax=1, ymin=-1, ymax=1, zmin=-1, zmax=1):
     positions = jnp.stack([X.ravel(), Y.ravel(), Z.ravel()], axis=-1)
     return positions
 
+
+
+if __name__ == "__main__":
+    grid_size = 120
+    N = grid_size**3
+    h = 2/grid_size
+    U, L = 1, 1
+    N_realizations = 1
+    epochs_simulation = 10000
+    t = jnp.array([0.0])
+    nu=0.1
+    k = 2 * jnp.pi / L
+
+    grid1 = meshgrid(10**3).reshape((10, 10, 10, 3))
+    grid = meshgrid(N).reshape((grid_size, grid_size, grid_size, 3))
+
+    true_velocity = velocity_exact_solution_on_grid(t, grid, U, L=1, nu=nu)
+    true_velocity_in = velocity_exact_solution_on_grid(t, grid1, U, L=1, nu=nu)
+    print("The norm of the true velocity field is ", (true_velocity**2).sum(axis=-1).reshape(grid_size**3).mean())
+    vorticity = -compute_minus_curl(true_velocity)
+    velocity = velocity_from_vorticity(vorticity)
+
+    velocity_in = trilinear_interpolation_U(grid1, velocity)
+
+    print("The norm of the computed velocity field is ", (velocity**2).sum(axis=-1).reshape(grid_size**3).mean())
+
+    print(((velocity - true_velocity)**2).sum(axis=-1).shape)
+    print("Norm of the difference:", (((velocity - true_velocity) * vorticity)**2).sum(axis=-1).reshape(grid_size**3).mean())
+    print("Norm of the difference in different positions:", (((velocity_in - true_velocity_in))**2).sum(axis=-1).reshape(10**3).mean())

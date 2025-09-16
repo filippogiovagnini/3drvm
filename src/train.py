@@ -200,6 +200,8 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
                 t_ = jnp.array([i * dt])
 
                 velocity_field_at_t = velocity_exact_solution_on_grid(t_, lattice_for_error, U, L, nu)
+                print("The norm of the true velocity field is ", jnp.linalg.norm(velocity_field_at_t))
+
                 vorticity_at_t = jnp.sqrt(3) * k * velocity_field_at_t
                 error_norm = jnp.mean((VorticityNN(params, lattice_for_error) - vorticity_at_t)**2)
 
@@ -219,6 +221,7 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
         # Compute the velocity field and its gradient
         X_flat = X.reshape((-1, 3))  # Flatten the positions for the velocity computation
         U, nabla_U = main_vel_grad_vel(vorticity_on_a_grid, X, grid_size=grid_size)
+        
         nabla_U = nabla_U.reshape((N_realizations, N, 3, 3))  # Reshape to match the number of realizations and particles
         U = U.reshape((N_realizations, N, 3))  # Reshape to match the number of realizations and particles
         

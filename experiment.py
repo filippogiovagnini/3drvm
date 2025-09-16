@@ -12,11 +12,11 @@ if __name__ == "__main__":
     grid_size = 20
     N = grid_size**3
     nu = 0.01
-    N_time_steps = 5
+    N_time_steps = 2
     T = 0.5
     U, L = 1, 1
-    N_realizations = 2
-    epochs_simulation = 2000
+    N_realizations = 1
+    epochs_simulation = 10000
     t = jnp.array([T])
     # hidden_dim = 512 and learning_rate = 0.001 work well, do not change them.
     hidden_dim = 512

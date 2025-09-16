@@ -204,13 +204,12 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
 
                 vorticity_at_t = -compute_minus_curl(velocity_field_at_t).reshape((1000000, 3))
                 error_norm = jnp.mean((VorticityNN(params, lattice_for_error) - vorticity_at_t)**2)
-
+                norm_of_vorticity = jnp.mean(vorticity_at_t**2)
+                rel_error_norm = jnp.sqrt(error_norm) / jnp.sqrt(norm_of_vorticity)
                 #error_norm = jnp.sum((VorticityNN(params, X) - vorticity_0_X)**2)
                 loss_history_step.append(loss)
-                print(f"Current time step: {i * dt}, Epoch {epoch}, Loss: {loss}, Error_norm: {error_norm}. The learning rate is {schedule(epoch)}")
+                print(f"Time step: {i * dt}, Epoch {epoch}, Relative error is {int(100*rel_error_norm)}, Error_norm: {error_norm}, LR is {schedule(epoch)},Loss: {loss}")
                 
-        
-
 
         vorticity = VorticityNN(params, X)
 

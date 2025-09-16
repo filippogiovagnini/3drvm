@@ -12,7 +12,7 @@ if __name__ == "__main__":
     grid_size = 30
     N = grid_size**3
     nu = 0.01
-    N_time_steps = 3
+    N_time_steps = 10
     T = 0.5
     U, L = 1, 1
     N_realizations = 3

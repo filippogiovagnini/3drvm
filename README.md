@@ -1,6 +1,6 @@
 # 3drvm
 
-This repository contains the **JAX implementation** of a neural network–based Random Vortex Method for simulating incompressible fluid flows in **three-dimensional, wall-bounded domains**.
+This repository contains a preliminary **JAX** implementation of the Implicit Deep Random Vortex Network in three dimensions (3drvm), developed to carry out initial numerical experiments beyond the original 2D formulation introduced in [Cherepanov & Ertel, 2025](https://pubs.aip.org/aip/pof/article-abstract/37/3/033118/3339167/Implicit-Deep-Random-Vortex-Methods-for-simulating?redirectedFrom=fulltext).
 
 Unlike classical numerical solvers (finite differences, finite elements, spectral methods), this approach is **grid-free** and avoids explicit evaluation of the **Biot–Savart kernel**, making it suitable for geometrically complex domains, although, for now, we implemented the method just for the three-dimensional torus.
 
@@ -46,7 +46,7 @@ This project generalizes the **Deep Random Vortex Method (DRVM)** [Qi & Meng, 20
 - Sirignano, J., Spiliopoulos, K. *DGM: A deep learning algorithm for solving PDEs.* J. Comput. Phys., 2018.  
 - Qi, J., Meng, X. *Deep Random Vortex Method for 2D Navier–Stokes Equations.* 2022.  
 - Cherepanov, A. *Neural networks based random vortex methods.* 2024.  
-- Cherepanov, A. *A Monte Carlo method for incompressible fluid dynamics.* 2023.  
+- Cherepanov, A., Ertel, S. *Implicit Deep Random Vortex Methods for simulating incompressible flows in wall bounded domains.* 2025.  
 - Giovagnini, F., Crisan, D. *A uniform particle approximation to the Navier–Stokes-alpha models in three dimensions with advection noise.* 2025.
 
 ---

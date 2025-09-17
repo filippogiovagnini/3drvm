@@ -23,6 +23,7 @@ Use at your own risk.
 - **Custom loss function** derived from vortex representation formula
 - **Monte Carlo training scheme** for efficiency and flexibility
 - Fully implemented in [JAX](https://github.com/jax-ml/jax) with GPU/TPU acceleration
+- Support for ```wandb``` to monitor the training loss and other metrics.
 
 ---
 

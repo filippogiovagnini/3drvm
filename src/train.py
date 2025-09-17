@@ -11,15 +11,10 @@ import optax
 import jax
 import jax.numpy as jnp
 from jax import random
-
 import wandb
-wandb.login(key="619a28b56653287a0a8a5285b48f082b26e9275b")
-
-project = "3drvm"
-entity="filippogiovagnini-imperial-college-london"
 
 
-def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rate = 0.01, num_epochs = 1000000, key = jax.random.PRNGKey(42), decay_rate = 0.95):
+def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rate = 0.01, num_epochs = 1000000, key = jax.random.PRNGKey(42), decay_rate = 0.95, use_wandb=False):
     """
     Train the neural network model to learn the vorticity field.
 
@@ -35,6 +30,11 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
     Returns:
         positions (jnp.ndarray): Array of shape (N, 3) containing 3D points.
     """
+    if use_wandb:
+        wandb.login(key="your_api_key_here")
+
+        project = "3drvm"
+        entity="filippogiovagnini-imperial-college-london"
 
     # A helper function to randomly initialize weights and biases
     # for a dense neural network layer
@@ -199,11 +199,34 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
             'epochs' : 1000,
             'lr' : 0.001
         }
+        if use_wandb:
+            with wandb.init(entity=entity, project=project, config=config) as run:
+                
+                print(f"lr: {config['lr']}")
 
-        with wandb.init(entity=entity, project=project, config=config) as run:
-            
-            print(f"lr: {config['lr']}")
+                for epoch in range(num_epochs_step):
+                    params, opt_state, loss = update(params, opt_state, lattice, X, Omega, Delta_eta)
+                    #loss_history[i, epoch] = loss
 
+                    lattice_for_error = meshgrid(1000000)
+
+                    if epoch % 100 == 0:
+
+                        t_ = jnp.array([i * dt])
+
+                        velocity_field_at_t = velocity_exact_solution_on_grid(t_, lattice_for_error.reshape(100, 100, 100, 3), U, L, nu)
+
+                        vorticity_at_t = -compute_minus_curl(velocity_field_at_t).reshape((1000000, 3))
+                        error_norm = jnp.mean((VorticityNN(params, lattice_for_error) - vorticity_at_t)**2)
+                        norm_of_vorticity = jnp.mean(vorticity_at_t**2)
+                        rel_error_norm = jnp.sqrt(error_norm) / jnp.sqrt(norm_of_vorticity)
+                        #error_norm = jnp.sum((VorticityNN(params, X) - vorticity_0_X)**2)
+                        loss_history_step.append(loss)
+                        print(f"Time step: {i * dt}, Epoch {epoch}, Relative error is {int(100*rel_error_norm)}, Error_norm: {error_norm}, LR is {schedule(epoch)}, Loss: {loss}")
+                                
+                    run.log({"error_norm": error_norm, "loss": loss, "relative_error": int(100*rel_error_norm)})
+
+        else:
             for epoch in range(num_epochs_step):
                 params, opt_state, loss = update(params, opt_state, lattice, X, Omega, Delta_eta)
                 #loss_history[i, epoch] = loss
@@ -223,8 +246,8 @@ def train(N, N_steps, N_realizations, T, nu = 0.1, hidden_dim = 10, learning_rat
                     #error_norm = jnp.sum((VorticityNN(params, X) - vorticity_0_X)**2)
                     loss_history_step.append(loss)
                     print(f"Time step: {i * dt}, Epoch {epoch}, Relative error is {int(100*rel_error_norm)}, Error_norm: {error_norm}, LR is {schedule(epoch)}, Loss: {loss}")
-                            
-                run.log({"error_norm": error_norm, "loss": loss, "relative_error": int(100*rel_error_norm)})
+
+
 
         vorticity = VorticityNN(params, X)
 

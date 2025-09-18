@@ -147,4 +147,4 @@ This makes the method **grid-free, implicit, and data-efficient**.
 
 An example of what you can get follows:
 
-![Alt text](pics/with_40_to_3_particle_ours_3d.png)
+![3D Result](pics/with_40_to_3_particles_ours_3d.png)

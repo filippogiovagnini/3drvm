@@ -145,6 +145,12 @@ This makes the method **grid-free, implicit, and data-efficient**.
 
 ## 📈 Examples
 
-An example of what you can get follows:
+An example of what you can get follows. In the experiment of this repo, we restricted ourselves to the Taylor-Green solution to the 3D-NS equations. At time 0.1 the true velocity field looks like:
+
+![3D Result](pics/with_40_to_3_particles_true_3d.png)
+
+This is how the approximated solution with our method looks like:
 
 ![3D Result](pics/with_40_to_3_particles_ours_3d.png)
+
+The main function in ```train.py``` also gives the possibility to plot 2D projections.

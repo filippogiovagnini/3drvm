@@ -142,3 +142,9 @@ This makes the method **grid-free, implicit, and data-efficient**.
 - **Scalable**: Monte Carlo formulation suitable for high dimensions.  
 
 ---
+
+## 📈 Examples
+
+An example of what you can get follows:
+
+![Alt text](https://drive.google.com/file/d/173RzIdosKzdVVpfaOTO31Zc5J9g3o02e/view?usp=sharing "Optional title")

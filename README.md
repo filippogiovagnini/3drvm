@@ -147,4 +147,4 @@ This makes the method **grid-free, implicit, and data-efficient**.
 
 An example of what you can get follows:
 
-![Alt text](https://drive.google.com/file/d/173RzIdosKzdVVpfaOTO31Zc5J9g3o02e/view?usp=sharing "Optional title")
+![Alt text](/pics/with_40_to_3_particle_ours_3d.png?raw=true "Approximated solution")
